@@ -1,3 +1,5 @@
+// Cat based off https://www.vhv.rs/viewpic/hRmTwJb_cat-pixel-art-png-download-transparent-png/
+
 let game = Bagel.init({
     id: "Bagel",
     game: {
@@ -15,6 +17,23 @@ let game = Bagel.init({
                 {
                     id: "Tile1",
                     src: "assets/imgs/tile1.png"
+                },
+                {
+                    id: "Tile2",
+                    src: "assets/imgs/tile2.png"
+                },
+                {
+                    id: "Tile3",
+                    src: "assets/imgs/tile3.png"
+                },
+                {
+                    id: "Tile4",
+                    src: "assets/imgs/tile4.png"
+                },
+
+                {
+                    id: "Nine",
+                    src: "assets/imgs/nine.png"
                 }
             ]
         },
@@ -31,7 +50,9 @@ let game = Bagel.init({
                     canvas.width = 800;
                     canvas.height = 450;
                     ctx.imageSmoothingEnabled = false;
-                    ctx.drawImage(prerender, -camera.x * camera.zoom, -camera.y * camera.zoom, prerender.width * camera.zoom, prerender.width * camera.zoom);
+                    let width = prerender.width * camera.zoom;
+                    let height = prerender.width * camera.zoom;
+                    ctx.drawImage(prerender, (game.width / 2) - (camera.x * camera.zoom) - (width / 2), (game.height / 2) - (camera.y * camera.zoom) - (height / 2), width, height);
                 },
                 scripts: {
                     init: [
@@ -111,8 +132,10 @@ let game = Bagel.init({
                                 let vars = me.vars;
                                 let levelCanvas = Bagel.get.sprite("Level").vars.canvas;
                                 let target = Math.max(game.width, game.height) / Math.min(levelCanvas.width, levelCanvas.height);
+
+
                                 if (vars.zoom > target) {
-                                    vars.zoomVel -= 0.1;
+                                    vars.zoomVel -= 0.2;
                                     vars.zoom += vars.zoomVel;
                                     vars.zoomVel *= 0.9;
                                     if (vars.zoom <= target) {
@@ -120,6 +143,26 @@ let game = Bagel.init({
                                         vars.zoomVel = 0;
                                     }
                                 }
+
+                                let level = game.vars.levels[game.vars.level];
+                                let res = game.vars.tileResolution;
+                                let mouse = game.input.mouse;
+                                vars.x = (level.start.x * res) + ((mouse.x - (game.width / 2)) * game.vars.sensitivity);
+                                vars.y = (level.start.y * res) + ((mouse.y - (game.height / 2)) * game.vars.sensitivity);
+                            },
+                            stateToRun: "game"
+                        }
+                    ]
+                }
+            },
+            {
+                id: "Nine",
+                img: "Nine",
+                scripts: {
+                    init: [
+                        {
+                            code: me => {
+                                me.visible = false;
                             },
                             stateToRun: "game"
                         }
@@ -136,16 +179,20 @@ let game = Bagel.init({
             {
                 start: {
                     x: 0,
-                    y: 5
+                    y: 3
                 },
                 tileMap: {
                     "000000": 0,
-                    ffa600: 1
+                    "ffa600": 1,
+                    "1400ff": 4,
+                    "ff0000": 2,
+                    "c90000": 3
                 }
             }
         ],
         level: 0,
-        tileResolution: 16
+        tileResolution: 16,
+        sensitivity: 0.1
     },
     config: {
         display: {
