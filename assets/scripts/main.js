@@ -2,6 +2,7 @@
 /*
 TODO:
 Fall animation, walk animation, jump animation
+Fix Bagel.js so minus widths and heights work
 */
 
 let game = Bagel.init({
@@ -209,8 +210,9 @@ let game = Bagel.init({
                                     vars.y = level.start.y;
                                 }
                                 else {
-                                    vars.x = level.start.x + (((mouse.x - (game.width / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
-                                    vars.y = level.start.y + (((mouse.y - (game.height / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
+                                    let nine = Bagel.get.sprite("Nine").vars;
+                                    vars.x = nine.x + (((mouse.x - (game.width / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
+                                    vars.y = nine.y + (((mouse.y - (game.height / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
                                 }
                             },
                             stateToRun: "game"
@@ -254,7 +256,16 @@ let game = Bagel.init({
                             let down = game.input.keys.keys;
 
                             if (down[lookup.a]) {
-                                me.vars.xVel -= 0.1;
+                                me.vars.xVel -= 0.01;
+                                if (me.width > 0) {
+                                    me.width *= -1;
+                                }
+                            }
+                            if (down[lookup.d]) {
+                                me.vars.xVel += 0.01;
+                                if (me.width < 0) {
+                                    me.width *= -1;
+                                }
                             }
                         },
                         physics: me => {
