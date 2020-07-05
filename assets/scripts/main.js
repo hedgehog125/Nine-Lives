@@ -34,6 +34,50 @@ let game = Bagel.init({
                     id: "Tile4",
                     src: "assets/imgs/tile4.png"
                 },
+                {
+                    id: "Tile5",
+                    src: "assets/imgs/tile5.png"
+                },
+                {
+                    id: "Tile6",
+                    src: "assets/imgs/tile6.png"
+                },
+                {
+                    id: "Tile7",
+                    src: "assets/imgs/tile7.png"
+                },
+                {
+                    id: "Tile8",
+                    src: "assets/imgs/tile8.png"
+                },
+                {
+                    id: "Tile9",
+                    src: "assets/imgs/tile9.png"
+                },
+                {
+                    id: "Tile10",
+                    src: "assets/imgs/tile10.png"
+                },
+                {
+                    id: "Tile11",
+                    src: "assets/imgs/tile11.png"
+                },
+                {
+                    id: "Tile12",
+                    src: "assets/imgs/tile12.png"
+                },
+                {
+                    id: "Tile13",
+                    src: "assets/imgs/tile13.png"
+                },
+                {
+                    id: "Tile14",
+                    src: "assets/imgs/tile14.png"
+                },
+                {
+                    id: "Tile15",
+                    src: "assets/imgs/tile15.png"
+                },
 
                 {
                     id: "Nine",
@@ -251,21 +295,22 @@ let game = Bagel.init({
                 tileMap: {
                     "00000000": 0, // Air
                     "000000ff": 1, // Block
-                    "ffe0e0ff": 5, // Button
+                    "ffe1e1ff": 5, // Button
                     "ff7171ff": 3, // Up bend wire
                     "ffa1a1ff": 2, // Wire
-                    "ff3535fff": 6, // Door
+                    "ff3535ff": 6, // Door. Non-tile
                     "0000ffff": 7, // Water
                     "ffdb00ff": 8, // Battery
-                    "9d9d9dff": 9, // Metal rod
-                    "505050ff": 10, // Match
-                    "7f390fff": 11, // Wood
-                    "00ff29ff": 0, // Radioactive waste. Invisible, processed later
+                    "9d9d9dff": 9, // Metal rod. Non-tile
+                    "505050ff": 10, // Match. Non-tile
+                    "7f390fff": 11, // Wood. Non-tile, underwater
+                    "00ff29ff": 15, // Radioactive waste. Non-tile
                     "008816ff": 12, // Poison
                     "ef00ffff": 0, // Suffocation. Invisible
                     "ffffffff": 13, // Snow
                     "7b0083ff": 14, // Dart trap
-                    "ff0000ff": 4 // Pressure plate
+                    "ff0000ff": 4, // Pressure plate
+                    "00ff28ff": 15 // Toxic waste barrel
                 }
             }
         ],
