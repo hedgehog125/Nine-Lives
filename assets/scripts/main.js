@@ -99,7 +99,11 @@ let game = Bagel.init({
                                 let x = 0;
                                 while (x < img.width) {
                                     let hex = Bagel.maths.hex;
-                                    let tile = level.tileMap[hex(data.data[i]) + hex(data.data[i + 1]) + hex(data.data[i + 2])];
+                                    let tile = hex(data.data[i]) + hex(data.data[i + 1]) + hex(data.data[i + 2]) + hex(data.data[i + 3]);
+                                    if (level.tileMap[tile] == null) {
+                                        console.error("No tile for colour " + JSON.stringify(tile) + ".");
+                                    }
+                                    tile = level.tileMap[tile];
                                     tiles[x + "," + y] = tile;
                                     tile = Bagel.get.asset.img("Tile" + tile);
 
@@ -245,11 +249,23 @@ let game = Bagel.init({
                     y: 0
                 },
                 tileMap: {
-                    "000000": 0,
-                    "ffa600": 1,
-                    "1400ff": 4,
-                    "ff0000": 2,
-                    "c90000": 3
+                    "00000000": 0, // Air
+                    "000000ff": 1, // Block
+                    "ffe0e0ff": 5, // Button
+                    "ff7171ff": 3, // Up bend wire
+                    "ffa1a1ff": 2, // Wire
+                    "ff3535fff": 6, // Door
+                    "0000ffff": 7, // Water
+                    "ffdb00ff": 8, // Battery
+                    "9d9d9dff": 9, // Metal rod
+                    "505050ff": 10, // Match
+                    "7f390fff": 11, // Wood
+                    "00ff29ff": 0, // Radioactive waste. Invisible, processed later
+                    "008816ff": 12, // Poison
+                    "ef00ffff": 0, // Suffocation. Invisible
+                    "ffffffff": 13, // Snow
+                    "7b0083ff": 14, // Dart trap
+                    "ff0000ff": 4 // Pressure plate
                 }
             }
         ],
