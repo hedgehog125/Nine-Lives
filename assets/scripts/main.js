@@ -132,6 +132,8 @@ let game = Bagel.init({
                                     y: level.start.y,
                                     zoomVel: 0
                                 };
+                                game.input.mouse.x = game.width / 2; // So the camera is centred before you look
+                                game.input.mouse.y = game.height / 2;
                             },
                             stateToRun: "game"
                         }
@@ -144,6 +146,9 @@ let game = Bagel.init({
                                 let target = Math.max(game.width, game.height) / Math.min(levelCanvas.width, levelCanvas.height);
 
 
+                                let level = game.vars.levels[game.vars.level];
+                                let res = game.vars.tileResolution;
+                                let mouse = game.input.mouse;
                                 if (vars.zoom > target) {
                                     vars.zoomVel -= 0.2;
                                     vars.zoom += vars.zoomVel;
@@ -152,13 +157,13 @@ let game = Bagel.init({
                                         vars.zoom = target;
                                         vars.zoomVel = 0;
                                     }
+                                    vars.x = level.start.x;
+                                    vars.y = level.start.y;
                                 }
-
-                                let level = game.vars.levels[game.vars.level];
-                                let res = game.vars.tileResolution;
-                                let mouse = game.input.mouse;
-                                vars.x = level.start.x + (((mouse.x - (game.width / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
-                                vars.y = level.start.y + (((mouse.y - (game.height / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
+                                else {
+                                    vars.x = level.start.x + (((mouse.x - (game.width / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
+                                    vars.y = level.start.y + (((mouse.y - (game.height / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
+                                }
                             },
                             stateToRun: "game"
                         }
@@ -197,8 +202,8 @@ let game = Bagel.init({
                     steps: {
                         position: me => {
                             let camera = Bagel.get.sprite("Camera").vars;
-                            me.x = ((game.width / 2) + me.vars.x) - (camera.x * camera.zoom * game.vars.tileResolution);
-                            me.y = ((game.height / 2) + me.vars.y) - (camera.y * camera.zoom * game.vars.tileResolution);
+                            me.x = ((game.width / 2) + (me.vars.x * camera.zoom * game.vars.tileResolution)) - (camera.x * camera.zoom * game.vars.tileResolution);
+                            me.y = ((game.height / 2) + (me.vars.y * camera.zoom * game.vars.tileResolution)) - (camera.y * camera.zoom * game.vars.tileResolution);
                             me.width = game.vars.tileResolution * camera.zoom;
                             me.height = me.width;
                         },
@@ -209,10 +214,9 @@ let game = Bagel.init({
                             let x = me.vars.x + (level.width / 2);
                             let y = me.vars.y + (level.height / 2);
 
-                            console.log(Math.ceil(y - 1))
 
-                            if (level.tiles[Math.round(x) + "," + Math.ceil(y - 1)] == 0) {
-                                me.vars.yVel += 1;
+                            if (level.tiles[Math.floor(x) + "," + Math.round(y)] == 0 && level.tiles[Math.ceil(x) + "," + Math.round(y)] == 0) {
+                                me.vars.yVel += 0.01;
                             }
                             else {
                                 if (me.vars.yVel > 0) {
@@ -222,8 +226,8 @@ let game = Bagel.init({
 
                             me.vars.x += me.vars.xVel;
                             me.vars.y += me.vars.yVel;
-                            me.vars.xVel *= 0.8;
-                            me.vars.yVel *= 0.8;
+                            me.vars.xVel *= 0.9;
+                            me.vars.yVel *= 0.9;
                         }
                     }
                 }
@@ -237,8 +241,8 @@ let game = Bagel.init({
         levels: [
             {
                 start: {
-                    x: 0,
-                    y: 2
+                    x: -4,
+                    y: 0
                 },
                 tileMap: {
                     "000000": 0,
