@@ -1,4 +1,8 @@
 // Cat based off https://www.vhv.rs/viewpic/hRmTwJb_cat-pixel-art-png-download-transparent-png/
+/*
+TODO:
+Fall animation, walk animation, jump animation
+*/
 
 let game = Bagel.init({
     id: "Bagel",
@@ -52,7 +56,7 @@ let game = Bagel.init({
                     ctx.imageSmoothingEnabled = false;
                     let width = prerender.width * camera.zoom;
                     let height = prerender.width * camera.zoom;
-                    ctx.drawImage(prerender, (game.width / 2) - (camera.x * camera.zoom) - (width / 2), (game.height / 2) - (camera.y * camera.zoom) - (height / 2), width, height);
+                    ctx.drawImage(prerender, (game.width / 2) - (camera.x * camera.zoom * game.vars.tileResolution) - (width / 2), (game.height / 2) - (camera.y * camera.zoom * game.vars.tileResolution) - (height / 2), width, height);
                 },
                 scripts: {
                     init: [
@@ -64,7 +68,7 @@ let game = Bagel.init({
                         }
                     ],
                     steps: {
-                        prerender: (me, game) => {
+                        prerender: me => {
                             let level = game.vars.levels[game.vars.level];
                             let img = Bagel.get.asset.img("Level" + game.vars.level);
                             let res = game.vars.tileResolution;
@@ -87,14 +91,17 @@ let game = Bagel.init({
                             ctx.drawImage(img, 0, 0, img.width, img.height);
                             let data = ctx.getImageData(0, 0, img.width, img.height);
 
+                            let tiles = {};
+
                             let y = 0;
                             let i = 0;
                             while (y < img.height) {
                                 let x = 0;
                                 while (x < img.width) {
                                     let hex = Bagel.maths.hex;
-                                    let tile = "Tile" + level.tileMap[hex(data.data[i]) + hex(data.data[i + 1]) + hex(data.data[i + 2])];
-                                    tile = Bagel.get.asset.img(tile);
+                                    let tile = level.tileMap[hex(data.data[i]) + hex(data.data[i + 1]) + hex(data.data[i + 2])];
+                                    tiles[x + "," + y] = tile;
+                                    tile = Bagel.get.asset.img("Tile" + tile);
 
                                     mainCtx.drawImage(tile, x * res, y * res, res, res);
                                     x++;
@@ -102,6 +109,9 @@ let game = Bagel.init({
                                 }
                                 y++;
                             }
+                            level.tiles = tiles;
+                            level.width = img.width;
+                            level.height = img.height;
                         }
                     }
                 }
@@ -118,8 +128,8 @@ let game = Bagel.init({
 
                                 me.vars = {
                                     zoom: Math.max(game.width, game.height) / res,
-                                    x: level.start.x * res,
-                                    y: level.start.y * res,
+                                    x: level.start.x,
+                                    y: level.start.y,
                                     zoomVel: 0
                                 };
                             },
@@ -147,8 +157,8 @@ let game = Bagel.init({
                                 let level = game.vars.levels[game.vars.level];
                                 let res = game.vars.tileResolution;
                                 let mouse = game.input.mouse;
-                                vars.x = (level.start.x * res) + ((mouse.x - (game.width / 2)) * game.vars.sensitivity);
-                                vars.y = (level.start.y * res) + ((mouse.y - (game.height / 2)) * game.vars.sensitivity);
+                                vars.x = level.start.x + (((mouse.x - (game.width / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
+                                vars.y = level.start.y + (((mouse.y - (game.height / 2)) * game.vars.sensitivity) / (vars.zoom * game.vars.tileResolution));
                             },
                             stateToRun: "game"
                         }
@@ -158,15 +168,64 @@ let game = Bagel.init({
             {
                 id: "Nine",
                 img: "Nine",
+                vars: {
+                    xVel: 0,
+                    yVel: 0
+                },
                 scripts: {
                     init: [
                         {
                             code: me => {
-                                me.visible = false;
+                                let level = game.vars.levels[game.vars.level];
+                                let camera = Bagel.get.sprite("Camera").vars;
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                Bagel.step.sprite("position");
                             },
                             stateToRun: "game"
                         }
-                    ]
+                    ],
+                    main: [
+                        {
+                            code: (me, game, step) => {
+                                step("physics");
+                                step("position");
+                            },
+                            stateToRun: "game"
+                        }
+                    ],
+                    steps: {
+                        position: me => {
+                            let camera = Bagel.get.sprite("Camera").vars;
+                            me.x = ((game.width / 2) + me.vars.x) - (camera.x * camera.zoom * game.vars.tileResolution);
+                            me.y = ((game.height / 2) + me.vars.y) - (camera.y * camera.zoom * game.vars.tileResolution);
+                            me.width = game.vars.tileResolution * camera.zoom;
+                            me.height = me.width;
+                        },
+                        physics: me => {
+                            let level = game.vars.levels[game.vars.level];
+                            let camera = Bagel.get.sprite("Camera").vars;
+
+                            let x = me.vars.x + (level.width / 2);
+                            let y = me.vars.y + (level.height / 2);
+
+                            console.log(Math.ceil(y - 1))
+
+                            if (level.tiles[Math.round(x) + "," + Math.ceil(y - 1)] == 0) {
+                                me.vars.yVel += 1;
+                            }
+                            else {
+                                if (me.vars.yVel > 0) {
+                                    me.vars.yVel = 0;
+                                }
+                            }
+
+                            me.vars.x += me.vars.xVel;
+                            me.vars.y += me.vars.yVel;
+                            me.vars.xVel *= 0.8;
+                            me.vars.yVel *= 0.8;
+                        }
+                    }
                 }
             }
         ]
@@ -179,7 +238,7 @@ let game = Bagel.init({
             {
                 start: {
                     x: 0,
-                    y: 3
+                    y: 2
                 },
                 tileMap: {
                     "000000": 0,
@@ -192,7 +251,7 @@ let game = Bagel.init({
         ],
         level: 0,
         tileResolution: 16,
-        sensitivity: 0.1
+        sensitivity: 1
     },
     config: {
         display: {
