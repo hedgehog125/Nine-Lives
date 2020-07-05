@@ -99,7 +99,7 @@ let game = Bagel.init({
                     canvas.height = 450;
                     ctx.imageSmoothingEnabled = false;
                     let width = prerender.width * camera.zoom;
-                    let height = prerender.width * camera.zoom;
+                    let height = prerender.height * camera.zoom;
                     ctx.drawImage(prerender, (game.width / 2) - (camera.x * camera.zoom * game.vars.tileResolution) - (width / 2), (game.height / 2) - (camera.y * camera.zoom * game.vars.tileResolution) - (height / 2), width, height);
                 },
                 scripts: {
@@ -241,6 +241,7 @@ let game = Bagel.init({
                     main: [
                         {
                             code: (me, game, step) => {
+                                step("inputs");
                                 step("physics");
                                 step("position");
                             },
@@ -248,12 +249,13 @@ let game = Bagel.init({
                         }
                     ],
                     steps: {
-                        position: me => {
-                            let camera = Bagel.get.sprite("Camera").vars;
-                            me.x = ((game.width / 2) + (me.vars.x * camera.zoom * game.vars.tileResolution)) - (camera.x * camera.zoom * game.vars.tileResolution);
-                            me.y = ((game.height / 2) + (me.vars.y * camera.zoom * game.vars.tileResolution)) - (camera.y * camera.zoom * game.vars.tileResolution);
-                            me.width = game.vars.tileResolution * camera.zoom;
-                            me.height = me.width;
+                        inputs: me => {
+                            let lookup = game.input.lookup;
+                            let down = game.input.keys.keys;
+
+                            if (down[lookup.a]) {
+                                me.vars.xVel -= 0.1;
+                            }
                         },
                         physics: me => {
                             let level = game.vars.levels[game.vars.level];
@@ -276,6 +278,13 @@ let game = Bagel.init({
                             me.vars.y += me.vars.yVel;
                             me.vars.xVel *= 0.9;
                             me.vars.yVel *= 0.9;
+                        },
+                        position: me => {
+                            let camera = Bagel.get.sprite("Camera").vars;
+                            me.x = ((game.width / 2) + (me.vars.x * camera.zoom * game.vars.tileResolution)) - (camera.x * camera.zoom * game.vars.tileResolution);
+                            me.y = ((game.height / 2) + (me.vars.y * camera.zoom * game.vars.tileResolution)) - (camera.y * camera.zoom * game.vars.tileResolution);
+                            me.width = game.vars.tileResolution * camera.zoom;
+                            me.height = me.width;
                         }
                     }
                 }
@@ -290,7 +299,7 @@ let game = Bagel.init({
             {
                 start: {
                     x: -4,
-                    y: 0
+                    y: 3
                 },
                 tileMap: {
                     "00000000": 0, // Air
@@ -329,3 +338,4 @@ let game = Bagel.init({
         }
     }
 });
+//alert("Use WASD to move. Click to interact with stuff. Die in 9 different ways to win.");
