@@ -225,7 +225,8 @@ let game = Bagel.init({
                 img: "Nine",
                 vars: {
                     xVel: 0,
-                    yVel: 0
+                    yVel: 0,
+                    onGround: false
                 },
                 scripts: {
                     init: [
@@ -256,16 +257,19 @@ let game = Bagel.init({
                             let down = game.input.keys.keys;
 
                             if (down[lookup.a]) {
-                                me.vars.xVel -= 0.01;
+                                me.vars.xVel -= 0.02;
                                 if (me.width > 0) {
                                     me.width *= -1;
                                 }
                             }
                             if (down[lookup.d]) {
-                                me.vars.xVel += 0.01;
+                                me.vars.xVel += 0.02;
                                 if (me.width < 0) {
                                     me.width *= -1;
                                 }
+                            }
+                            if (down[lookup.w] && me.vars.onGround) {
+                                me.vars.yVel -= 0.3;
                             }
                         },
                         physics: me => {
@@ -275,13 +279,43 @@ let game = Bagel.init({
                             let x = me.vars.x + (level.width / 2);
                             let y = me.vars.y + (level.height / 2);
 
+                            let solids = game.vars.solid;
 
-                            if (level.tiles[Math.floor(x) + "," + Math.round(y)] == 0 && level.tiles[Math.ceil(x) + "," + Math.round(y)] == 0) {
-                                me.vars.yVel += 0.01;
+                            if (! solids.includes(
+                                level.tiles[Math.round(x) + "," + Math.round(y)]
+                            )) {
+                                me.vars.yVel += 0.02;
+                                me.vars.onGround = false;
                             }
                             else {
                                 if (me.vars.yVel > 0) {
                                     me.vars.yVel = 0;
+                                }
+                                me.vars.onGround = true;
+                            }
+                            if (me.vars.yVel < 0) {
+                                if (solids.includes(level.tiles[Math.round(x) + "," + Math.round(y - 1)])) {
+                                    me.vars.yVel = 0;
+                                }
+                            }
+                            if (me.vars.xVel != 0) {
+                                if (me.vars.xVel > 0) {
+                                    if (solids.includes(
+                                        level.tiles[Math.round(x) + "," + Math.round(y - 1)]
+                                    ) || solids.includes(
+                                        level.tiles[Math.round(x) + "," + Math.ceil(y - 1)]
+                                    )) {
+                                        me.vars.xVel = 0;
+                                    }
+                                }
+                                else {
+                                    if (solids.includes(
+                                        level.tiles[Math.round(x - 1) + "," + Math.round(y - 1)]
+                                    ) || solids.includes(
+                                        level.tiles[Math.round(x - 1) + "," + Math.ceil(y - 1)]
+                                    )) {
+                                        me.vars.xVel = 0;
+                                    }
                                 }
                             }
 
@@ -306,6 +340,7 @@ let game = Bagel.init({
     height: 450,
     state: "game",
     vars: {
+        solid: [1, 2, 3, 6, 8, 14],
         levels: [
             {
                 start: {
