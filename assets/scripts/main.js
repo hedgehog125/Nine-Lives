@@ -149,6 +149,31 @@ let game = Bagel.init({
                                         console.error("No tile for colour " + JSON.stringify(tile) + ".");
                                     }
                                     tile = level.tileMap[tile];
+                                    if (tile < 0) {
+                                        tile = 0;
+                                    }
+
+                                    if ([5, 6, 9, 10, 11, 15].includes(tile)) {
+                                        switch (tile) {
+                                            case 5:
+                                                break;
+                                            case 6:
+                                                tile = 0;
+                                                break;
+                                            case 9:
+                                                tile = 0;
+                                                break;
+                                            case 10:
+                                                tile = 0;
+                                                break;
+                                            case 11:
+                                                tile = 0;
+                                                break;
+                                            case 15:
+                                                tile = 0;
+                                        }
+
+                                    }
                                     tiles[x + "," + y] = tile;
                                     tile = Bagel.get.asset.img("Tile" + tile);
 
@@ -226,7 +251,11 @@ let game = Bagel.init({
                 vars: {
                     xVel: 0,
                     yVel: 0,
-                    onGround: false
+                    onGround: false,
+                    deaths: [],
+                    stacked: false,
+                    spaceDelay: false,
+                    towerHeight: 0
                 },
                 scripts: {
                     init: [
@@ -271,6 +300,68 @@ let game = Bagel.init({
                             if (down[lookup.w] && me.vars.onGround) {
                                 me.vars.yVel -= 0.3;
                             }
+                            if (down[lookup.space]) {
+                                if (! me.vars.spaceDelay) {
+                                    if (me.vars.stacked) {
+                                        me.vars.destroyTower = true;
+                                    }
+                                    else {
+                                        let level = game.vars.levels[game.vars.level];
+                                        let x = me.vars.x + (level.width / 2);
+                                        let y = me.vars.y + (level.height / 2);
+                                        let solids = game.vars.solid;
+
+                                        let i = 0;
+                                        while (i < (9 - me.vars.deaths.length)) {
+                                            if (solids.includes(level.tiles[Math.round(x) + "," + Math.round(y - i - 2)])) {
+                                                break;
+                                            }
+                                            me.clone({
+                                                vars: {
+                                                    i: i
+                                                },
+                                                scripts: {
+                                                    main: [
+                                                        me => {
+                                                            let camera = Bagel.get.sprite("Camera").vars;
+                                                            me.x = me.parent.x;
+                                                            me.y = me.parent.y - ((me.vars.i + 1) * camera.zoom * game.vars.tileResolution);
+
+                                                            let level = game.vars.levels[game.vars.level];
+                                                            let solids = game.vars.solid;
+                                                            let x = me.parent.vars.x + (level.width / 2);
+                                                            let y = (me.parent.vars.y - me.vars.i) + (level.height / 2);
+
+                                                            if (solids.includes(level.tiles[Math.round(x) + "," + Math.round(y - 1)])) {
+                                                                me.parent.vars.destroyTower = true;
+                                                                me.parent.vars.stacked = false;
+                                                                me.parent.vars.towerHeight = 0;
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            });
+                                            i++;
+                                        }
+                                        me.vars.towerHeight = i;
+                                    }
+                                    me.vars.stacked = ! me.vars.stacked;
+                                    me.vars.spaceDelay = true;
+                                }
+                            }
+                            else {
+                                me.vars.spaceDelay = false;
+                            }
+                            if (me.vars.destroyTower) {
+                                for (let i in me.cloneIDs) {
+                                    if (me.cloneIDs[i]) {
+                                        let clone = Bagel.get.sprite(me.cloneIDs[i]);
+                                        clone.delete();
+                                    }
+                                }
+                                me.vars.y -= me.vars.towerHeight;
+                                me.vars.destroyTower = false;
+                            }
                         },
                         physics: me => {
                             let level = game.vars.levels[game.vars.level];
@@ -281,17 +372,17 @@ let game = Bagel.init({
 
                             let solids = game.vars.solid;
 
-                            if (! solids.includes(
-                                level.tiles[Math.round(x) + "," + Math.round(y)]
-                            )) {
-                                me.vars.yVel += 0.02;
-                                me.vars.onGround = false;
+                            me.vars.onGround = false;
+                            if (solids.includes(level.tiles[Math.floor(x) + "," + Math.round(y)]) || solids.includes(level.tiles[Math.round(x) + "," + Math.round(y)])) {
+                                me.vars.onGround = true;
                             }
-                            else {
+                            if (me.vars.onGround) {
                                 if (me.vars.yVel > 0) {
                                     me.vars.yVel = 0;
                                 }
-                                me.vars.onGround = true;
+                            }
+                            else {
+                                me.vars.yVel += 0.02;
                             }
                             if (me.vars.yVel < 0) {
                                 if (solids.includes(level.tiles[Math.round(x) + "," + Math.round(y - 1)])) {
@@ -319,10 +410,40 @@ let game = Bagel.init({
                                 }
                             }
 
+                            // Poison
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 1)] == 12) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Poison")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Poisoned!");
+                                    me.vars.deaths.push("Poison");
+                                }
+                            }
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 1)] == -1) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Suffocation")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Suffocated!");
+                                    me.vars.deaths.push("Suffocation");
+                                }
+                            }
+
                             me.vars.x += me.vars.xVel;
                             me.vars.y += me.vars.yVel;
-                            me.vars.xVel *= 0.9;
-                            me.vars.yVel *= 0.9;
+                            me.vars.xVel *= 0.8;
+                            me.vars.yVel *= 0.8;
                         },
                         position: me => {
                             let camera = Bagel.get.sprite("Camera").vars;
@@ -340,7 +461,7 @@ let game = Bagel.init({
     height: 450,
     state: "game",
     vars: {
-        solid: [1, 2, 3, 6, 8, 14],
+        solid: [1, 2, 3, 6, 8, 13, 14],
         levels: [
             {
                 start: {
@@ -361,7 +482,7 @@ let game = Bagel.init({
                     "7f390fff": 11, // Wood. Non-tile, underwater
                     "00ff29ff": 15, // Radioactive waste. Non-tile
                     "008816ff": 12, // Poison
-                    "ef00ffff": 0, // Suffocation. Invisible
+                    "ef00ffff": -1, // Suffocation. Invisible
                     "ffffffff": 13, // Snow
                     "7b0083ff": 14, // Dart trap
                     "ff0000ff": 4, // Pressure plate
@@ -384,4 +505,4 @@ let game = Bagel.init({
         }
     }
 });
-//alert("Use WASD to move. Click to interact with stuff. Die in 9 different ways to win.");
+//alert("Use WASD to move. Press space to stack. Click to interact with stuff. Die in 9 different ways to win.");
