@@ -101,7 +101,10 @@ let game = Bagel.init({
                     ctx.imageSmoothingEnabled = false;
                     let width = prerender.width * camera.zoom;
                     let height = prerender.height * camera.zoom;
-                    ctx.drawImage(prerender, (game.width / 2) - (camera.x * camera.zoom * game.vars.tileResolution) - (width / 2), (game.height / 2) - (camera.y * camera.zoom * game.vars.tileResolution) - (height / 2), width, height);
+                    me.vars.x = (game.width / 2) - (camera.x * camera.zoom * game.vars.tileResolution);
+                    me.vars.y = (game.height / 2) - (camera.y * camera.zoom * game.vars.tileResolution);
+
+                    ctx.drawImage(prerender, me.vars.x - (width / 2), me.vars.y - (height / 2), width, height);
                 },
                 scripts: {
                     init: [
@@ -172,7 +175,34 @@ let game = Bagel.init({
                                             case 15:
                                                 tile = 0;
                                         }
+                                        Bagel.get.sprite("LevelSprites").clone({
+                                            vars: {
+                                                tile: tile,
+                                                x: x,
+                                                y: y
+                                            },
+                                            visible: true,
+                                            img: "Tile" + tile,
+                                            scripts: {
+                                                init: [me => {
+                                                    if (me.vars.tile == 5) {
+                                                        //me.visible = false;
+                                                    }
+                                                }],
+                                                main: [me => {
+                                                    let level = game.vars.levels[game.vars.level];
+                                                    let camera = Bagel.get.sprite("Camera").vars;
+                                                    let levelSprite = Bagel.get.sprite("Level");
 
+                                                    me.x = (me.vars.x * camera.zoom * game.vars.tileResolution) - ((camera.x + (level.width)) * camera.zoom * game.vars.tileResolution);
+
+                                                    me.y = ((me.vars.y * camera.zoom * game.vars.tileResolution) - (level.height / 2)) - (camera.y * camera.zoom * game.vars.tileResolution);
+                                                    me.width = game.vars.tileResolution * camera.zoom;
+                                                    me.height = me.width;
+                                                }]
+                                            },
+                                            img: "Tile" + tile
+                                        });
                                     }
                                     tiles[x + "," + y] = tile;
                                     tile = Bagel.get.asset.img("Tile" + tile);
@@ -189,6 +219,9 @@ let game = Bagel.init({
                         }
                     }
                 }
+            },
+            {
+                id: "LevelSprites"
             },
             {
                 id: "Camera",
