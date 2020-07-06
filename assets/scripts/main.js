@@ -104,7 +104,14 @@ let game = Bagel.init({
                     me.vars.x = (game.width / 2) - (camera.x * camera.zoom * game.vars.tileResolution);
                     me.vars.y = (game.height / 2) - (camera.y * camera.zoom * game.vars.tileResolution);
 
+                    if (me.vars.render) {
+                        Bagel.step.sprite("prerender", game, me);
+                    }
+
                     ctx.drawImage(prerender, me.vars.x - (width / 2), me.vars.y - (height / 2), width, height);
+                },
+                vars: {
+                    render: false
                 },
                 scripts: {
                     init: [
@@ -117,105 +124,130 @@ let game = Bagel.init({
                     ],
                     steps: {
                         prerender: me => {
+                            me.vars.render = false;
+
+
                             let level = game.vars.levels[game.vars.level];
-                            let img = Bagel.get.asset.img("Level" + game.vars.level);
-                            let res = game.vars.tileResolution;
+                            if (level.tiles) {
+                                let canvas = me.vars.canvas;
+                                let ctx = me.vars.ctx;
+                                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                let res = game.vars.tileResolution;
 
-                            let canvas = document.createElement("canvas");
-                            let ctx = canvas.getContext("2d");
-                            let mainCanvas = document.createElement("canvas");
-                            let mainCtx = mainCanvas.getContext("2d");
-                            me.vars.canvas = mainCanvas;
-                            me.vars.ctx = mainCtx;
+                                for (let i in level.tiles) {
+                                    let tile = level.tiles[i];
+                                    let x = parseInt(i.split(",")[0]);
+                                    let y = parseInt(i.split(",")[1]);
 
-
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                            ctx.imageSmoothingEnabled = false;
-                            mainCanvas.width = img.width * res;
-                            mainCanvas.height = img.height * res;
-                            mainCtx.imageSmoothingEnabled = false;
-
-                            ctx.drawImage(img, 0, 0, img.width, img.height);
-                            let data = ctx.getImageData(0, 0, img.width, img.height);
-
-                            let tiles = {};
-
-                            let y = 0;
-                            let i = 0;
-                            while (y < img.height) {
-                                let x = 0;
-                                while (x < img.width) {
-                                    let hex = Bagel.maths.hex;
-                                    let tile = hex(data.data[i]) + hex(data.data[i + 1]) + hex(data.data[i + 2]) + hex(data.data[i + 3]);
-                                    if (level.tileMap[tile] == null) {
-                                        console.error("No tile for colour " + JSON.stringify(tile) + ".");
-                                    }
-                                    tile = level.tileMap[tile];
                                     if (tile < 0) {
                                         tile = 0;
                                     }
 
-                                    if ([5, 6, 9, 10, 11, 15].includes(tile)) {
-                                        switch (tile) {
-                                            case 5:
-                                                break;
-                                            case 6:
-                                                tile = 0;
-                                                break;
-                                            case 9:
-                                                tile = 0;
-                                                break;
-                                            case 10:
-                                                tile = 0;
-                                                break;
-                                            case 11:
-                                                tile = 0;
-                                                break;
-                                            case 15:
-                                                tile = 0;
-                                        }
-                                        Bagel.get.sprite("LevelSprites").clone({
-                                            vars: {
-                                                tile: tile,
-                                                x: x,
-                                                y: y
-                                            },
-                                            visible: true,
-                                            img: "Tile" + tile,
-                                            scripts: {
-                                                init: [me => {
-                                                    if (me.vars.tile == 5) {
-                                                        //me.visible = false;
-                                                    }
-                                                }],
-                                                main: [me => {
-                                                    let level = game.vars.levels[game.vars.level];
-                                                    let camera = Bagel.get.sprite("Camera").vars;
-                                                    let levelSprite = Bagel.get.sprite("Level");
-
-                                                    me.x = (me.vars.x * camera.zoom * game.vars.tileResolution) - ((camera.x + (level.width)) * camera.zoom * game.vars.tileResolution);
-
-                                                    me.y = ((me.vars.y * camera.zoom * game.vars.tileResolution) - (level.height / 2)) - (camera.y * camera.zoom * game.vars.tileResolution);
-                                                    me.width = game.vars.tileResolution * camera.zoom;
-                                                    me.height = me.width;
-                                                }]
-                                            },
-                                            img: "Tile" + tile
-                                        });
-                                    }
-                                    tiles[x + "," + y] = tile;
-                                    tile = Bagel.get.asset.img("Tile" + tile);
-
-                                    mainCtx.drawImage(tile, x * res, y * res, res, res);
-                                    x++;
-                                    i += 4;
+                                    ctx.drawImage(Bagel.get.asset.img("Tile" + tile), x * res, y * res, res, res);
                                 }
-                                y++;
                             }
-                            level.tiles = tiles;
-                            level.width = img.width;
-                            level.height = img.height;
+                            else {
+                                let img = Bagel.get.asset.img("Level" + game.vars.level);
+                                let res = game.vars.tileResolution;
+
+                                let canvas = document.createElement("canvas");
+                                let ctx = canvas.getContext("2d");
+                                let mainCanvas = document.createElement("canvas");
+                                let mainCtx = mainCanvas.getContext("2d");
+                                me.vars.canvas = mainCanvas;
+                                me.vars.ctx = mainCtx;
+
+
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                ctx.imageSmoothingEnabled = false;
+                                mainCanvas.width = img.width * res;
+                                mainCanvas.height = img.height * res;
+                                mainCtx.imageSmoothingEnabled = false;
+
+                                ctx.drawImage(img, 0, 0, img.width, img.height);
+                                let data = ctx.getImageData(0, 0, img.width, img.height);
+
+                                let tiles = {};
+
+                                let y = 0;
+                                let i = 0;
+                                while (y < img.height) {
+                                    let x = 0;
+                                    while (x < img.width) {
+                                        let hex = Bagel.maths.hex;
+                                        let tile = hex(data.data[i]) + hex(data.data[i + 1]) + hex(data.data[i + 2]) + hex(data.data[i + 3]);
+                                        if (level.tileMap[tile] == null) {
+                                            console.error("No tile for colour " + JSON.stringify(tile) + ".");
+                                        }
+                                        tile = level.tileMap[tile];
+                                        tiles[x + "," + y] = tile;
+                                        if (tile < 0) {
+                                            tile = 0;
+                                        }
+
+                                        /*
+                                        if ([5, 6, 9, 10, 11, 15].includes(tile)) {
+                                            switch (tile) {
+                                                case 5:
+                                                    break;
+                                                case 6:
+                                                    tile = 0;
+                                                    break;
+                                                case 9:
+                                                    tile = 0;
+                                                    break;
+                                                case 10:
+                                                    tile = 0;
+                                                    break;
+                                                case 11:
+                                                    tile = 0;
+                                                    break;
+                                                case 15:
+                                                    tile = 0;
+                                            }
+                                            Bagel.get.sprite("LevelSprites").clone({
+                                                vars: {
+                                                    tile: tile,
+                                                    x: x,
+                                                    y: y
+                                                },
+                                                visible: true,
+                                                img: "Tile" + tile,
+                                                scripts: {
+                                                    init: [me => {
+                                                        if (me.vars.tile == 5) {
+                                                            //me.visible = false;
+                                                        }
+                                                    }],
+                                                    main: [me => {
+                                                        let level = game.vars.levels[game.vars.level];
+                                                        let camera = Bagel.get.sprite("Camera").vars;
+                                                        let levelSprite = Bagel.get.sprite("Level");
+
+                                                        me.x = (me.vars.x * camera.zoom * game.vars.tileResolution) - ((camera.x + (level.width)) * camera.zoom * game.vars.tileResolution);
+
+                                                        me.y = ((me.vars.y * camera.zoom * game.vars.tileResolution) - (level.height / 2)) - (camera.y * camera.zoom * game.vars.tileResolution);
+                                                        me.width = game.vars.tileResolution * camera.zoom;
+                                                        me.height = me.width;
+                                                    }]
+                                                },
+                                                img: "Tile" + tile
+                                            });
+                                        }
+                                        */
+                                        tile = Bagel.get.asset.img("Tile" + tile);
+
+                                        mainCtx.drawImage(tile, x * res, y * res, res, res);
+                                        x++;
+                                        i += 4;
+                                    }
+                                    y++;
+                                }
+                                level.tiles = tiles;
+                                level.width = img.width;
+                                level.height = img.height;
+                            }
                         }
                     }
                 }
@@ -443,8 +475,7 @@ let game = Bagel.init({
                                 }
                             }
 
-                            // Poison
-                            if (level.tiles[Math.round(x) + "," + Math.round(y - 1)] == 12) {
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 0.5)] == 12) {
                                 me.vars.x = level.start.x;
                                 me.vars.y = level.start.y;
                                 me.vars.xVel = 0;
@@ -458,7 +489,7 @@ let game = Bagel.init({
                                     me.vars.deaths.push("Poison");
                                 }
                             }
-                            if (level.tiles[Math.round(x) + "," + Math.round(y - 1)] == -1) {
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 0.5)] == -1) {
                                 me.vars.x = level.start.x;
                                 me.vars.y = level.start.y;
                                 me.vars.xVel = 0;
@@ -471,6 +502,124 @@ let game = Bagel.init({
                                     alert("Suffocated!");
                                     me.vars.deaths.push("Suffocation");
                                 }
+                            }
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 0.5)] == 11) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Burning")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Burnt!");
+                                    me.vars.deaths.push("Burning");
+                                }
+                            }
+                            if (level.tiles[Math.round(x) + "," + Math.round(y)] == 8) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Electrocution")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Electrocuted!");
+                                    me.vars.deaths.push("Electrocution");
+                                }
+                            }
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 0.5)] == 15) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Radiation")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Radiation poisoning!");
+                                    me.vars.deaths.push("Radiation");
+                                }
+                            }
+                            if (level.tiles[Math.round(x - 1) + "," + Math.round(y - 0.5)] == 14) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Shot")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Shot!");
+                                    me.vars.deaths.push("Shot");
+                                }
+                            }
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 0.5)] == 7) {
+                                me.vars.drownDelay++;
+                                if (me.vars.drownDelay > 500) {
+                                    me.vars.x = level.start.x;
+                                    me.vars.y = level.start.y;
+                                    me.vars.xVel = 0;
+                                    me.vars.yVel = 0;
+                                    if (me.vars.deaths.includes("Drowned")) {
+                                        alert("You died to the same thing twice, game over!");
+                                        location.reload();
+                                    }
+                                    else {
+                                        alert("Drowned!");
+                                        me.vars.deaths.push("Drowned");
+                                    }
+                                }
+                            }
+                            else {
+                                me.vars.drownDelay = 0;
+                            }
+                            if (level.tiles[Math.round(x) + "," + Math.round(y)] == 13) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Froze")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Froze!");
+                                    me.vars.deaths.push("Froze");
+                                }
+                            }
+
+                            if (level.tiles[Math.round(x - 0.5) + "," + Math.round(y - 1)] == 6) {
+                                me.vars.x = level.start.x;
+                                me.vars.y = level.start.y;
+                                me.vars.xVel = 0;
+                                me.vars.yVel = 0;
+                                if (me.vars.deaths.includes("Crushed")) {
+                                    alert("You died to the same thing twice, game over!");
+                                    location.reload();
+                                }
+                                else {
+                                    alert("Crushed!");
+                                    me.vars.deaths.push("Crushed");
+                                }
+                            }
+                            if (level.tiles[Math.round(x) + "," + Math.round(y - 0.5)] == 5) {
+                                level.tiles["29,17"] = 0;
+                                setTimeout(() => {
+                                    level.tiles["29,17"] = 6;
+                                    Bagel.get.sprite("Level", game).vars.render = true;
+                                }, 5000); // Wrote this at 2 am, give me a break
+                                Bagel.get.sprite("Level").vars.render = true;
+                            }
+
+                            if (me.vars.deaths.length == 9) {
+                                alert("You win!");
+                                game.paused = true;
                             }
 
                             me.vars.x += me.vars.xVel;
@@ -538,4 +687,4 @@ let game = Bagel.init({
         }
     }
 });
-//alert("Use WASD to move. Press space to stack. Click to interact with stuff. Die in 9 different ways to win.");
+alert("Use WASD to move. Press space to stack. Die in 9 different ways to win. Sorry for the bad quality, it got really rushed towards the end.");
